@@ -70,7 +70,7 @@ class MainWhile(threading.Thread):
         while self.main_loop_running:
             if first_sleep:
                 time.sleep(start_sleep_time)
-                first = False
+                first_sleep = False
             user_input = input("> ")
             if user_input == "start":
                 if not started_:

@@ -1,5 +1,7 @@
 import socket
 import threading
+import time
+
 
 class SocketServer(threading.Thread):
     server_process = None
@@ -66,8 +68,16 @@ class ThreadedServer(object):
                 if "kein Socket" in str(e):
                     break
 
+    connected_printed = False
+
+    def print_connected(self, address):
+        print("client connected: " + address)
+        self.connected_printed = True
+        time.sleep(3)
+        self.connected_printed = False
+
     def listen_to_client(self, client, address):
-        print("client connected: "+address)
+        self.print_connected(address)
         size = 1024
         while True:
             try:
@@ -78,6 +88,6 @@ class ThreadedServer(object):
                     client.send(response)
                 else:
                     raise socket.error('Client disconnected')
-            except:
+            except socket.gaierror:
                 client.close()
                 return False

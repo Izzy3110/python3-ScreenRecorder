@@ -30,13 +30,13 @@ class MouseMonitor(threading.Thread):
     def __init__(self):
 
         # Collect events until released
-        '''
+        """
         with mouse.Listener(
                 on_move=self.on_move,
                 on_click=self.on_click,
                 on_scroll=self.on_scroll) as listener:
             listener.join()
-        '''
+        """
 
         # ...or, in a non-blocking fashion:
         self.listener = mouse.Listener(
@@ -51,7 +51,7 @@ class MouseMonitor(threading.Thread):
                 self.is_started = True
                 self.listener.start()
             else:
-                print(len(self.messages ))
+                print(len(self.messages))
             time.sleep(.1)
 
     def on_move(self, x, y):
@@ -65,9 +65,6 @@ class MouseMonitor(threading.Thread):
         print('{0} at {1}'.format(
             'Pressed' if pressed else 'Released',
             (x, y)))
-        # if not pressed:
-            # Stop listener
-            # return False
 
     def on_scroll(self, x, y, dx, dy):
         self.messages.append('Scrolled {0} at {1}'.format(
