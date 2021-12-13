@@ -5,7 +5,7 @@ from server.socket_server import SocketServer
 
 
 class MainController:
-    DEFAULT_RECORD_FPS = 15
+    DEFAULT_RECORD_FPS = 60
     DEFAULT_OPTIONS = {
         "autostart": True,
         "recording_seconds": 10,
@@ -20,6 +20,7 @@ class MainController:
     stop_after_record = False
     project_path = None
     current_monitor = 1
+
     def __init__(self , project_path):
         self.project_path = project_path
         self.server_started = False
