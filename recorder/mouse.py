@@ -1,6 +1,5 @@
 import threading
 import time
-
 import pyautogui
 from pynput import mouse
 
