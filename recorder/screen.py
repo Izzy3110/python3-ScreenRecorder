@@ -47,7 +47,7 @@ class RecorderScreen(threading.Thread):
         self.fps = 10.0
         if fps is not None:
             self.fps = int(fps)
-
+        print(self.fps)
         self.output_filename = output_filename if output_filename is not None else "output.mp4"
         self.out = cv2.VideoWriter(self.output_filename, 0x7634706d, self.fps, self.SCREEN_SIZE)
         self.record_seconds = record_seconds if record_seconds is not None else 10
@@ -118,7 +118,7 @@ class RecorderScreen(threading.Thread):
                 # self.main_controller.print_data("current frame: "+str(len(self.frames)), prefix="rec")
                 self.out.write(frame)
 
-                if cv2.waitKey(1) == ord("q"):
+                if cv2.waitKey(60) == ord("q"):
                     break
 
             self.main_controller.print_data("stoppped recording after: "+str(self.current_t), prefix="rec:")
