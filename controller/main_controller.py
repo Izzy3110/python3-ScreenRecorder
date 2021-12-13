@@ -19,9 +19,9 @@ class MainController:
     server_started = None
     stop_after_record = False
     project_path = None
-
-    def __init__(self):
-        self.project_path = os.path.dirname(os.path.abspath(__file__))
+    current_monitor = 1
+    def __init__(self , project_path):
+        self.project_path = project_path
         self.server_started = False
 
     def print_data(self, message, prefix=None):
@@ -39,14 +39,18 @@ class MainController:
         self.SocketServer_.server_process.stop()
         self.SocketServer_.running = False
 
-    def start_record(self, recording_seconds, fps=None):
+    def start_record(self, recording_seconds, fps=None, monitor_id=None):
+        if monitor_id is not None:
+            print("using monitor: "+str(monitor_id))
+            self.current_monitor = monitor_id
+
         self.print_data("recording for "+str(recording_seconds)+" seconds at "+str(fps)+" fps", prefix="rec:")
         self.RecorderScreen_ = RecorderScreen(
             self,
             record_seconds=recording_seconds if recording_seconds is not None else -1,
             fps=fps,
             output_filename=os.path.join(self.project_path, "data", "output.mp4") if self.project_path is not None else "output.mp4",
-            monitor_id=1
+            monitor_id=self.current_monitor
         )
         self.RecorderScreen_.start()
 

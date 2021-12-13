@@ -31,7 +31,8 @@ def parse_commandline_options(main_controller_instance, main_while_instance):
     if "record_at_start" in options_.keys():
         main_controller_instance.start_record(
             recording_seconds=main_controller_instance.recording_seconds,
-            fps=options_["record_fps"] if "record_fps" in options_.keys() else main_controller_instance.DEFAULT_RECORD_FPS
+            fps=options_["record_fps"] if "record_fps" in options_.keys() else main_controller_instance.DEFAULT_RECORD_FPS,
+            monitor_id=1
         )
         ObserveRecording_ = ObserveRecording(main_while_instance, main_controller_instance)
         ObserveRecording_.start()

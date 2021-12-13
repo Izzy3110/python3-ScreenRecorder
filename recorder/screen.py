@@ -20,6 +20,7 @@ class RecorderScreen(threading.Thread):
     }
     main_controller = None
     frames = None
+    current_monitor = 1
 
     def get_monitor(self, monitor_id):
         if monitor_id == 1:
@@ -50,7 +51,7 @@ class RecorderScreen(threading.Thread):
         self.record_seconds = record_seconds if record_seconds is not None else 10
         if monitor_id is not None:
             self.current_monitor = self.get_monitor(monitor_id)
-
+        print(self.current_monitor)
         super(RecorderScreen, self).__init__()
 
     def run(self) -> None:
@@ -58,7 +59,7 @@ class RecorderScreen(threading.Thread):
         if self.record_seconds == -1:
             while self.recording:
                 self.current_t += 1
-                img = pyautogui.screenshot(region=self.monitors["1"])
+                img = pyautogui.screenshot(region=self.current_monitor)
 
                 frame = np.array(img)
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -77,7 +78,7 @@ class RecorderScreen(threading.Thread):
                 if not self.recording:
                     break
                 self.current_t = i
-                img = pyautogui.screenshot(region=self.monitors["1"])
+                img = pyautogui.screenshot(region=self.current_monitor)
                 frame = np.array(img)
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 self.frames.append(frame)
