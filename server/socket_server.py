@@ -1,6 +1,7 @@
 import socket
 import threading
 import time
+import uuid
 
 
 class SocketServer(threading.Thread):
@@ -52,15 +53,20 @@ class ThreadedServer(object):
     connected_printed = False
     buffer_size = 1024
     running = True
+    clients = None
 
     def __init__(self, host, port, main_controller_instance):
         self.main_controller_instance = main_controller_instance
         self.host = host
         self.port = port
+        self.clients = {}
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((self.host, self.port))
         self.socket_open = True
+
+    def new_client_uuid(self):
+        return str(uuid.uuid4())
 
     def stop(self):
         self.sock.close()
@@ -72,6 +78,14 @@ class ThreadedServer(object):
         while self.socket_open:
             try:
                 client, address = self.sock.accept()
+                client_uuid = self.new_client_uuid()
+                print(client_uuid)
+                if client_uuid not in self.clients.keys():
+                    self.clients[client_uuid] = {
+                        "client": client,
+                        "address": str(address[0]),
+                        "port": int(address[1])
+                    }
                 client.settimeout(60)
                 threading.Thread(target=self.listen_to_client, args=(client, address)).start()
             except OSError as e:
@@ -79,7 +93,7 @@ class ThreadedServer(object):
                     break
 
     def print_connected(self, address):
-        self.main_controller_instance.print_data("client connected: " + address, prefix="net:")
+        self.main_controller_instance.print_data("client connected: " + str(address[0])+":"+str(address[1]), prefix="net:")
         self.connected_printed = True
         time.sleep(3)
         self.connected_printed = False
@@ -91,10 +105,27 @@ class ThreadedServer(object):
             try:
                 data = client.recv(self.buffer_size)
                 if data:
+                    if data.decode("utf-8") == "Hello World!":
+                        for i in range(0,10):
+                            client.send(str(i).encode("utf-8"))
                     self.main_controller_instance.print_data(data.decode("utf-8"))
                     client.send(data)
                 else:
                     raise socket.error('Client disconnected')
+            except ConnectionAbortedError as e:
+                self.main_controller_instance.print_data("ConnectionAbortedError", prefix="err:")
+                return  False
             except socket.gaierror:
                 client.close()
+                return False
+            except ConnectionResetError as e:
+                self.main_controller_instance.print_data("Connection Reset by Client", prefix="err:")
+                for c_uuid in self.clients.keys():
+                    c_ = self.clients[c_uuid]
+                    if c_["address"] == address[0] and c_["port"] == address[1]:
+                        del self.clients[c_uuid]
+                        break
+                return False
+            except socket.timeout as e:
+                self.main_controller_instance.print_data("Socket Timeout", prefix="err:")
                 return False
