@@ -1,9 +1,11 @@
 import ctypes
 import threading
+from io import BytesIO
 import cv2
 import pyautogui
 import numpy as np
 from recorder.process_video import save_video
+import logging
 
 
 class RecorderScreen(threading.Thread):
@@ -54,16 +56,65 @@ class RecorderScreen(threading.Thread):
         print(self.current_monitor)
         super(RecorderScreen, self).__init__()
 
+    @staticmethod
+    def __pack_frame(frame):
+        f = BytesIO()
+        np.savez(f, frame=frame)
+
+        packet_size = len(f.getvalue())
+        header = '{0}:'.format(packet_size)
+        header = bytes(header.encode())  # prepend length of array
+
+        out = bytearray()
+        out += header
+
+        f.seek(0)
+        out += f.read()
+        return out
+
+    def send(self, frame, socket):
+        if not isinstance(frame, np.ndarray):
+            raise TypeError("input frame is not a valid numpy array")
+
+        out = self.__pack_frame(frame)
+        try:
+            socket.sendall(out)
+        except ConnectionResetError as e:
+            self.main_controller.print_data("reset", prefix="err:")
+            return False
+        logging.info("frame sent")
+
     def run(self) -> None:
         self.current_t = 0
         if self.record_seconds == -1:
             while self.recording:
                 self.current_t += 1
                 img = pyautogui.screenshot(region=self.current_monitor)
-
                 frame = np.array(img)
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                frame_resize = frame[::2, ::2]
                 self.frames.append(frame)
+                current_clients = self.main_controller.SocketServer_.server_process.server.clients
+                try:
+                    if len(current_clients.keys()) > 0:
+                        for c_uuid in self.main_controller.SocketServer_.server_process.server.clients.keys():
+                            try:
+                                c_ = self.main_controller.SocketServer_.server_process.server.clients[c_uuid]
+                                try:
+                                    self.send(frame_resize, c_["client"])
+
+                                except ConnectionResetError as e:
+                                    self.main_controller.print_data("client closed", prefix="net")
+                                    del self.main_controller.SocketServer_.server_process.server.clients[c_uuid]
+                                except ConnectionAbortedError as e:
+                                    self.main_controller.print_data("client aborted", prefix="net")
+                                    del self.main_controller.SocketServer_.server_process.server.clients[c_uuid]
+                                    print(len(self.main_controller.SocketServer_.server_process.server.clients))
+                            except KeyError:
+                                pass
+                except RuntimeError:
+                    current_clients = self.main_controller.SocketServer_.server_process.server.clients
+                    pass
                 # self.main_controller.print_data("current frame: "+str(len(self.frames)), prefix="rec")
                 self.out.write(frame)
 
